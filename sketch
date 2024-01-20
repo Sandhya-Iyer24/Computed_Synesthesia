@@ -1,0 +1,147 @@
+let vol = 0.0;
+let mic;
+let circles = [];
+let pitch;
+let audioContext;
+let noteDuration = 0;
+let end = false;
+let alpha = 255/2;
+let colorIndex = 0;
+/*let colorPalette = random(6);
+  ['#012A36', '#29274C', '#7E52A0', '#D295BF', '#E6BCCD'];
+  ['#E7ECEF', '#274C77', '#6096BA', '#A3CEF1', '#8B8C89']
+  ['#4BC6B9', '#73C1C6', '#96C3CE', '#A79AB2', '#B57BA6']
+  ['#92977E', '#E6E18F', '#FEFCAD', '#EADDA6', '#FFFAE2']
+  ['#132A13', '#31572C', '#4F772D', '#90A955', '#ECF39E']
+  ['#D8A47F', '#EF8354', '#EE4B6A', '#DF3B57', '#0F7173']
+  ['#5B4B49', '#DB93B0', '#F7BFB4', '#7DAF9C', '#23967F']*/
+//let diameter = 0;
+const model_url =
+  "https://cdn.jsdelivr.net/gh/ml5js/ml5-data-and-models/models/pitch-detection/crepe/";
+// this is a model from ml5 that does pitch detection
+
+let midiNum = 0;
+const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+let currentNote = "";
+let prevCurrentNote = 'C';
+let colors = [];
+
+function setup() {
+  createCanvas(600, 400);
+  audioContext = getAudioContext();
+  mic = new p5.AudioIn();
+  mic.start(startPitch);
+  startButton = new startButton(197, 380, 40, 20, startMic);
+  stopButton = new stopButton(297, 380, 40, 20, stopMic);
+  exportButton = new exportButton(397, 380, 40, 20, exportCanvas);
+
+  /*if(colorPalette == 0) {colors = ['#012A36', '#29274C', '#7E52A0', '#D295BF', '#E6BCCD'];}
+  if(colorPalette == 1) {colors = ['#E7ECEF', '#274C77', '#6096BA', '#A3CEF1', '#8B8C89'];}
+  if(colorPalette == 2) {colors = ['#4BC6B9', '#73C1C6', '#96C3CE', '#A79AB2', '#B57BA6'];}
+  if(colorPalette == 3) {colors = ['#92977E', '#E6E18F', '#FEFCAD', '#EADDA6', '#FFFAE2'];}
+  if(colorPalette == 4) {colors = ['#132A13', '#31572C', '#4F772D', '#90A955', '#ECF39E'];}
+  if(colorPalette == 5) {colors = ['#D8A47F', '#EF8354', '#EE4B6A', '#DF3B57', '#0F7173'];}
+  if(colorPalette == 6) {colors = ['#5B4B49', '#DB93B0', '#F7BFB4', '#7DAF9C', '#23967F'];}*/
+}
+
+function startPitch() {
+  pitch = ml5.pitchDetection(model_url, audioContext, mic.stream, modelLoaded);
+}
+
+//Load the model and get the pitch
+function modelLoaded() {
+  select("#status").html("Model Loaded");
+  getPitch();
+}
+
+//Draw on the canvas
+function draw() {
+  background(0);
+  noStroke();
+  fill('#3eb0c7');
+  rect (width/2, height-5, width, 90);
+  
+  startButton.display();
+  stopButton.display();
+  exportButton.display();
+
+  vol = mic.getLevel();
+  //let diameter = map(vol * 150, 0, 1, 50, 100);
+
+  for (let i = 0; i < circles.length; i++) {
+    let circle = circles[i];
+    circle.update();
+    circle.display();
+  }
+
+  if (currentNote == prevCurrentNote) {
+    noteDuration += 1;
+  } else{
+    noteDuration = 0;
+  }
+
+  if(((nf(vol, 1, 2)) > 0) && (noteDuration == 3)){
+    if(midiNum > 80) {
+      makeCircle(random(width), random(0, (height-90)/5), round(random(1, 4)));
+    } else if (midiNum > 77) {
+      makeCircle(random(width), random((height-90)/5, 2*((height-90)/5)), round(random(3, 4)));
+    } else if (midiNum > 75) {
+      makeCircle(random(width), random(2*((height-90)/5), 3*((height-90)/5)), round(random(2, 4)));
+    } else if (midiNum > 70) {
+      makeCircle(random(width), random(3*((height-90)/5), 4*((height-90)/5)), round(random(1, 2)));
+    } else {
+      makeCircle(random(width), random(4*((height-90)/5), (height-90)), round(random(0, 1)));
+    }
+  }
+  prevCurrentNote = currentNote;
+}
+
+function getPitch() {
+  pitch.getPitch(function (err, frequency) {
+    if (frequency) {
+      midiNum = freqToMidi(frequency);
+      currentNote = notes[midiNum % 12];
+      //fill(colors[midiNum % 12]);
+      select("#noteAndVolume").html(
+        "Note: " +
+          currentNote +
+          " - midi " +
+          midiNum +
+          " - volume " +
+          nf(vol, 1, 2)
+      );
+    }
+    getPitch();
+  });
+}
+
+function makeCircle(x, y, c) {
+  let circle = new Circle(x, y, c);
+  circles.push(circle);
+}
+
+function startMic() {
+  mic = new p5.AudioIn();
+  mic.start(startPitch);
+}
+
+function stopMic() {
+  if (mic) {
+    mic.stop();
+  }
+}
+
+function exportCanvas() {
+  let capturedImage = get(0, 0, width, height-90);
+  capturedImage.save('myCanvas', 'png');
+}
+
+function mouseClicked() {
+  if(startButton.isClickedOn()) {
+    startButton.handleIt();
+  } else if (stopButton.isClickedOn()) {
+    stopButton.handleIt();
+  } else if (exportButton.isClickedOn()) {
+    exportButton.handleIt();
+  }
+}
