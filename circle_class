@@ -1,0 +1,37 @@
+class Circle {
+    constructor(x, y, c) {
+      this.x = x;
+      this.y = y;
+      this.size = 0;
+      this.cycle = 0;
+      //this.diameter = diameter;
+      this.alpha = random(100,255);
+      this.colors = ['#5B4B49', '#DB93B0', '#F7BFB4', '#7DAF9C', '#23967F'];
+      this.c = this.colors[c];
+      this.done = false;
+      
+    }
+  
+    update() {
+      if (!this.done && this.size < 150) {
+        this.size = this.size + 4;
+    
+        if (this.size >= 150) {
+          this.cycle += 1;
+          if (this.cycle >= 15) {
+            this.done = true;
+          }
+        }
+      }
+    }
+    
+  
+    display() {
+      if (!this.done) {
+        //let alpha = map(this.size, 0, 400, 255, 0);
+        noStroke();
+        fill(red(this.c), green(this.c), blue(this.c), this.alpha);
+        circle(this.x, this.y, this.size);
+      }
+    }
+}
