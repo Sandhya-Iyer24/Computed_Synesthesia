@@ -1,0 +1,64 @@
+class Button {
+  constructor(x, y, w, h, handler) {
+      this.x = x;
+      this.y = y;
+      this.w = w;
+      this.h = h;
+      this.state = false;
+      this.handler = handler;
+  }
+
+  display() {
+      rectMode(CENTER);
+      strokeWeight(3);
+      stroke(255);
+      fill(255);
+      rect(this.x, this.y, this.w, this.h);
+  }
+
+  isClickedOn() {
+      if (dist(this.x, this.y, mouseX, mouseY) < this.w / 2) { // calculating if mouse is on button
+          //button was clicked
+          this.state = !this.state; // toggle on/off in state
+          return true;
+      } else {
+          return false;
+      }
+  }
+
+  handleIt() {
+      if (this.handler) {
+          this.handler();
+      }
+  }
+}
+
+class startButton extends Button {
+  display() {
+      super.display();
+      textSize(15);
+      textFont("Helvetica");
+      fill(0);
+      text("Start", 180, 385);
+  }
+}
+
+class stopButton extends Button {
+  display() {
+    super.display();
+    textSize(15);
+    textFont("Helvetica");
+    fill(0);
+    text("Stop", 280, 385);
+}
+}
+
+class exportButton extends Button {
+  display() {
+    super.display();
+    textSize(10);
+    textFont("Helvetica");
+    fill(0);
+    text("Export", 380, 385);
+}
+}
